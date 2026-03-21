@@ -1,0 +1,4 @@
+playwright
+pandas
+streamlit
+python-dotenv

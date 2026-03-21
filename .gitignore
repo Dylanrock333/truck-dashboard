@@ -1,3 +1,4 @@
 .env
 services/browser_profile/
 .claude
+data/

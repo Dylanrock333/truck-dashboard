@@ -73,8 +73,8 @@ def load_price_changes() -> pd.DataFrame:
         ORDER BY ph2.date DESC, l.name
     """, conn)
     conn.close()
-    df["from_num"] = df["from_price"].apply(parse_price)
-    df["to_num"]   = df["to_price"].apply(parse_price)
+    df["from_num"] = pd.to_numeric(df["from_price"].apply(parse_price), errors="coerce")
+    df["to_num"]   = pd.to_numeric(df["to_price"].apply(parse_price), errors="coerce")
     df["delta"]    = df["to_num"] - df["from_num"]
     df["pct"]      = (df["delta"] / df["from_num"] * 100).round(1)
     return df

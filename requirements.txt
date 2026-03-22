@@ -1,5 +1,4 @@
 playwright
-# After installing: playwright install chromium
 pandas
 streamlit
 python-dotenv

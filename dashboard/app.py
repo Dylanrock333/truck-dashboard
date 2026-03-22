@@ -44,6 +44,43 @@ def extract_year(name: str | None) -> int | None:
 
 
 @st.cache_data(ttl=120)
+def load_price_changes() -> pd.DataFrame:
+    conn = sqlite3.connect(str(DB_PATH))
+    df = pd.read_sql_query("""
+        SELECT
+            l.name,
+            l.source,
+            l.url,
+            ph1.price AS from_price,
+            ph2.price AS to_price,
+            ph2.date  AS changed_date
+        FROM listings l
+        JOIN (
+            SELECT ph.listing_id, ph.source, ph.price, ph.date
+            FROM price_history ph
+            JOIN (SELECT listing_id, source, MIN(row_id) AS min_id
+                  FROM price_history GROUP BY listing_id, source) mn
+              ON ph.row_id = mn.min_id
+        ) ph1 ON ph1.listing_id = l.id AND ph1.source = l.source
+        JOIN (
+            SELECT ph.listing_id, ph.source, ph.price, ph.date
+            FROM price_history ph
+            JOIN (SELECT listing_id, source, MAX(row_id) AS max_id
+                  FROM price_history GROUP BY listing_id, source) mx
+              ON ph.row_id = mx.max_id
+        ) ph2 ON ph2.listing_id = l.id AND ph2.source = l.source
+        WHERE ph1.price != ph2.price
+        ORDER BY ph2.date DESC, l.name
+    """, conn)
+    conn.close()
+    df["from_num"] = df["from_price"].apply(parse_price)
+    df["to_num"]   = df["to_price"].apply(parse_price)
+    df["delta"]    = df["to_num"] - df["from_num"]
+    df["pct"]      = (df["delta"] / df["from_num"] * 100).round(1)
+    return df
+
+
+@st.cache_data(ttl=120)
 def load_data() -> pd.DataFrame:
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
@@ -164,6 +201,7 @@ with st.sidebar:
     st.divider()
     if st.button("Clear cache / refresh", use_container_width=True):
         load_data.clear()
+        load_price_changes.clear()
         st.rerun()
 
 # ── apply filters ──────────────────────────────────────────────────────────────
@@ -231,6 +269,35 @@ col5.metric(
 )
 
 st.divider()
+
+# ── price changes ──────────────────────────────────────────────────────────────
+changes = load_price_changes()
+expander_label = f"Price Changes — {len(changes)} listings" if not changes.empty else "Price Changes (none yet)"
+
+with st.expander(expander_label, expanded=not changes.empty):
+    if changes.empty:
+        st.info("No price changes detected yet — check back after more scrape runs.")
+    else:
+        display = changes[["name", "url", "source", "from_num", "to_num", "delta", "pct", "changed_date"]].copy()
+        display["source"] = display["source"].map({
+            "facebook_marketplace": "Facebook",
+            "truck_paper": "TruckPaper",
+        })
+        st.dataframe(
+            display,
+            column_config={
+                "name":         st.column_config.TextColumn("Listing"),
+                "url":          st.column_config.LinkColumn("Link", display_text="View →"),
+                "source":       st.column_config.TextColumn("Source", width="small"),
+                "from_num":     st.column_config.NumberColumn("Was ($)", format="$%d"),
+                "to_num":       st.column_config.NumberColumn("Now ($)", format="$%d"),
+                "delta":        st.column_config.NumberColumn("Change ($)", format="$%d"),
+                "pct":          st.column_config.NumberColumn("Change (%)", format="%.1f%%"),
+                "changed_date": st.column_config.DateColumn("Date", format="MMM D"),
+            },
+            hide_index=True,
+            use_container_width=True,
+        )
 
 # ── card grid ──────────────────────────────────────────────────────────────────
 

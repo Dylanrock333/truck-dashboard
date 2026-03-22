@@ -1,4 +1,7 @@
 .env
-services/browser_profile/
+**/browser_profile/
 .claude
+**/CLAUDE.md
 data/
+venv/
+**/__pycache__/

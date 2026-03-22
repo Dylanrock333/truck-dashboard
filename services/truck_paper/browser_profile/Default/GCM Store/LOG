@@ -1,3 +1,2 @@
-2026/03/21-10:28:37.174 696c48 Reusing MANIFEST /Users/dylanflores/truck-dashboard/services/truck_paper/browser_profile/Default/GCM Store/MANIFEST-000001
-2026/03/21-10:28:37.175 696c48 Recovering log #3
-2026/03/21-10:28:37.175 696c48 Reusing old log /Users/dylanflores/truck-dashboard/services/truck_paper/browser_profile/Default/GCM Store/000003.log 
+2026/03/22-13:56:04.923 172d5 Creating DB /home/deepthought/truck-dashboard/services/truck_paper/browser_profile/Default/GCM Store since it was missing.
+2026/03/22-13:56:04.964 172d5 Reusing MANIFEST /home/deepthought/truck-dashboard/services/truck_paper/browser_profile/Default/GCM Store/MANIFEST-000001

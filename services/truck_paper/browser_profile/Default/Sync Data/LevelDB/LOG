@@ -1,3 +1,3 @@
-2026/03/21-10:28:32.020 696c57 Reusing MANIFEST /Users/dylanflores/truck-dashboard/services/truck_paper/browser_profile/Default/Sync Data/LevelDB/MANIFEST-000001
-2026/03/21-10:28:32.020 696c57 Recovering log #3
-2026/03/21-10:28:32.020 696c57 Reusing old log /Users/dylanflores/truck-dashboard/services/truck_paper/browser_profile/Default/Sync Data/LevelDB/000003.log 
+2026/03/22-13:55:56.455 172da Reusing MANIFEST /home/deepthought/truck-dashboard/services/truck_paper/browser_profile/Default/Sync Data/LevelDB/MANIFEST-000001
+2026/03/22-13:55:56.456 172da Recovering log #3
+2026/03/22-13:55:56.456 172da Reusing old log /home/deepthought/truck-dashboard/services/truck_paper/browser_profile/Default/Sync Data/LevelDB/000003.log 

@@ -2,3 +2,6 @@
 services/browser_profile/
 .claude
 data/
+venv/
+**/browser_profile/
+**/__pycache__/

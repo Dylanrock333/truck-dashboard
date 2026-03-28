@@ -1,3 +1,4 @@
+import os
 import re
 import sqlite3
 from pathlib import Path
@@ -5,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-DB_PATH = Path(__file__).parent.parent / "data" / "truck_listings.db"
+DB_PATH = Path(os.environ.get("TRUCK_DB_PATH", Path.home() / "data" / "truck_listings.db"))
 
 st.set_page_config(
     page_title="Truck Dashboard",

@@ -45,6 +45,16 @@ def extract_year(name: str | None) -> int | None:
 
 
 @st.cache_data(ttl=120)
+def load_last_runs() -> dict:
+    conn = sqlite3.connect(str(DB_PATH))
+    rows = conn.execute(
+        "SELECT source, MAX(run_date) as last_run FROM scrape_runs GROUP BY source"
+    ).fetchall()
+    conn.close()
+    return {row[0]: row[1] for row in rows}
+
+
+@st.cache_data(ttl=120)
 def load_data() -> pd.DataFrame:
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
@@ -82,6 +92,7 @@ if not DB_PATH.exists():
     st.stop()
 
 df = load_data()
+last_runs = load_last_runs()
 
 # ── sidebar filters ────────────────────────────────────────────────────────────
 
@@ -165,6 +176,7 @@ with st.sidebar:
     st.divider()
     if st.button("Clear cache / refresh", use_container_width=True):
         load_data.clear()
+        load_last_runs.clear()
         st.rerun()
 
 # ── apply filters ──────────────────────────────────────────────────────────────
@@ -212,6 +224,14 @@ filtered = df[mask].copy()
 # ── header metrics ─────────────────────────────────────────────────────────────
 
 st.title("Truck Listings Dashboard")
+
+# Data freshness
+_source_labels = {"facebook_marketplace": "Facebook", "truck_paper": "TruckPaper"}
+_freshness_parts = [
+    f"**{_source_labels.get(src, src)}:** {date}"
+    for src, date in sorted(last_runs.items())
+]
+st.caption("Last scraped — " + "  |  ".join(_freshness_parts) if _freshness_parts else "Last scraped — no runs yet")
 
 col1, col2, col3, col4, col5 = st.columns(5)
 col1.metric("Total shown", len(filtered))

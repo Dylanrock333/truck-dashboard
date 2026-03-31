@@ -5,3 +5,4 @@ venv/
 *.pyo
 data/
 .claude
+**/CLAUDE.md

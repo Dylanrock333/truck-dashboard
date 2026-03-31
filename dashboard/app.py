@@ -45,6 +45,21 @@ def extract_year(name: str | None) -> int | None:
 
 
 @st.cache_data(ttl=120)
+def load_scrape_history() -> pd.DataFrame:
+    conn = sqlite3.connect(str(DB_PATH))
+    df = pd.read_sql_query(
+        "SELECT run_date, source, total, new, reseen FROM scrape_runs ORDER BY run_date DESC, source",
+        conn,
+    )
+    conn.close()
+    df["source"] = df["source"].map({
+        "facebook_marketplace": "Facebook",
+        "truck_paper": "TruckPaper",
+    })
+    return df
+
+
+@st.cache_data(ttl=120)
 def load_last_runs() -> dict:
     conn = sqlite3.connect(str(DB_PATH))
     rows = conn.execute(
@@ -174,10 +189,61 @@ with st.sidebar:
         mile_range = None
 
     st.divider()
+    if st.button("📊 Scrape History", use_container_width=True):
+        st.session_state["view"] = "history"
+        st.rerun()
     if st.button("Clear cache / refresh", use_container_width=True):
         load_data.clear()
         load_last_runs.clear()
+        load_scrape_history.clear()
         st.rerun()
+
+# ── history page ───────────────────────────────────────────────────────────────
+
+if st.session_state.get("view", "main") == "history":
+    if st.button("← Back to listings"):
+        st.session_state["view"] = "main"
+        st.rerun()
+
+    st.subheader("📊 Scrape History")
+
+    hist_df = load_scrape_history()
+
+    if hist_df.empty:
+        st.info("No scrape runs yet.")
+        st.stop()
+
+    import altair as alt
+
+    chart = (
+        alt.Chart(hist_df)
+        .mark_bar(opacity=0.85)
+        .encode(
+            x=alt.X("run_date:O", title="Date", sort=None),
+            y=alt.Y("new:Q", title="New listings"),
+            color=alt.Color(
+                "source:N",
+                scale=alt.Scale(
+                    domain=["Facebook", "TruckPaper"],
+                    range=["#4C9BE8", "#F4A340"],
+                ),
+            ),
+            xOffset="source:N",
+            tooltip=["run_date:O", "source:N", "new:Q", "reseen:Q", "total:Q"],
+        )
+        .properties(height=280)
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+    display_df = hist_df.rename(columns={
+        "run_date": "Date",
+        "source": "Source",
+        "new": "New",
+        "reseen": "Reseen",
+        "total": "Total",
+    })[["Date", "Source", "New", "Reseen", "Total"]]
+    st.dataframe(display_df, use_container_width=True, hide_index=True)
+    st.stop()
 
 # ── apply filters ──────────────────────────────────────────────────────────────
 
